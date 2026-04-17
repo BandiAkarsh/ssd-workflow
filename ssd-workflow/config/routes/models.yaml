@@ -1,0 +1,504 @@
+---
+description: "Intelligent model routing for SSD workflow"
+version: "0.1.0"
+---
+
+# Model Router Configuration
+
+This file defines how the SSD Orchestrator routes tasks to optimal AI models.
+
+## Routing Principles
+
+1. **Task-Type Specialization** - Different models for different task types
+2. **Cost Optimization** - Use cheapest model that meets quality threshold
+3. **Fallback Strategies** - Automatic failover on errors or timeouts
+4. **Performance Learning** - Track model performance, adjust routes
+5. **Consensus for Critical** - Use multiple models for high-stakes tasks
+
+---
+
+## Model Definitions
+
+### Premium Models (High Cost, High Quality)
+```yaml
+claude-opus-4:
+  provider: anthropic
+  cost_per_1k_tokens: 0.03  # Input, output varies
+  context_window: 200000
+  strengths:
+    - complex_reasoning
+    - architecture_design
+    - security_analysis
+    - creative_problem_solving
+  weaknesses:
+    - slower (5-15s response)
+    - expensive
+  best_for:
+    - architecture
+    - security
+    - complex_algorithms
+    - novel_problems
+
+gpt-5:
+  provider: openai
+  cost_per_1k_tokens: 0.025
+  context_window: 128000
+  strengths:
+    - all_round_excellence
+    - code_quality
+    - reasoning
+  weaknesses:
+    - expensive
+    - rate_limits
+  best_for:
+    - architecture
+    - implementation
+    - debugging
+```
+
+### Mid-Tier Models (Balanced)
+```yaml
+claude-sonnet-4.5:
+  provider: anthropic
+  cost_per_1k_tokens: 0.015
+  context_window: 200000
+  strengths:
+    - fast_reasoning
+    - code_generation
+    - creative_ui
+  weaknesses:
+    - occasional_oversight
+  best_for:
+    - implementation
+    - frontend
+    - api_development
+    - testing
+
+gpt-4o:
+  provider: openai
+  cost_per_1k_tokens: 0.01
+  context_window: 128000
+  strengths:
+    - fast
+    - reliable
+    - good_all_rounder
+  weaknesses:
+    - less_creative
+  best_for:
+    - implementation
+    - backend
+    - database
+    - devops
+```
+
+### Budget Models (Low Cost, Good for Simple Tasks)
+```yaml
+gpt-4o-mini:
+  provider: openai
+  cost_per_1k_tokens: 0.0005
+  context_window: 128000
+  strengths:
+    - very_fast
+    - extremely_cheap
+    - good_for_simple_tasks
+  weaknesses:
+    - limited_reasoning
+    - simpler_code
+  best_for:
+    - testing
+    - documentation
+    - simple_refactoring
+    - boilerplate
+
+claude-haiku:
+  provider: anthropic
+  cost_per_1k_tokens: 0.0008
+  context_window: 200000
+  strengths:
+    - fast
+    - cheap
+    - decent_quality
+  weaknesses:
+    - less_accurate
+  best_for:
+    - testing
+    - simple_tasks
+    - quick_fixes
+```
+
+---
+
+## Routing Rules by Task Type
+
+### Architecture & Design
+```yaml
+task_patterns:
+  - "design system architecture"
+  - "create microservice"
+  - "plan database schema"
+  - "choose technology stack"
+  - "API design"
+
+route:
+  primary: claude-opus-4
+  fallback: gpt-5
+  strategy: consensus  # Use both, merge best parts
+  confidence_threshold: 0.85
+  cost_priority: low  # Quality over cost
+```
+
+### Implementation (Backend/Frontend)
+```yaml
+task_patterns:
+  - "create API endpoint"
+  - "build component"
+  - "implement feature"
+  - "add validation"
+  - "write service"
+
+route:
+  primary: claude-sonnet-4.5
+  fallback: gpt-4o
+  strategy: fastest  # Whichever responds first
+  confidence_threshold: 0.75
+  cost_priority: medium
+```
+
+### Testing
+```yaml
+task_patterns:
+  - "write tests"
+  - "create test suite"
+  - "add unit tests"
+  - "integration testing"
+  - "e2e tests"
+
+route:
+  primary: gpt-4o-mini
+  fallback: claude-haiku
+  strategy: cost_optimized  # Cheapest that works
+  confidence_threshold: 0.70
+  cost_priority: high  # Minimize cost
+```
+
+### Security & Compliance
+```yaml
+task_patterns:
+  - "authentication"
+  - "authorization"
+  - "encryption"
+  - "vulnerability scan"
+  - "security audit"
+
+route:
+  primary: claude-opus-4
+  fallback: gpt-5
+  strategy: best_of_three  # Generate 3, pick most secure
+  confidence_threshold: 0.90  # High bar for security
+  cost_priority: low
+```
+
+### DevOps & Infrastructure
+```yaml
+task_patterns:
+  - "deploy"
+  - "Docker"
+  - "Kubernetes"
+  - "CI/CD"
+  - "infrastructure"
+
+route:
+  primary: gpt-4o
+  fallback: claude-sonnet-4.5
+  strategy: fastest
+  confidence_threshold: 0.80
+  cost_priority: medium
+```
+
+### Documentation & Simple Tasks
+```yaml
+task_patterns:
+  - "document"
+  - "readme"
+  - "comments"
+  - "refactor variable names"
+  - "format code"
+
+route:
+  primary: gpt-4o-mini
+  fallback: claude-haiku
+  strategy: cost_optimized
+  confidence_threshold: 0.60
+  cost_priority: high
+```
+
+---
+
+## Fallback Strategies
+
+### Strategy: Fastest
+```yaml
+# Send to both primary and fallback simultaneously
+# Use whichever responds first (within 5s timeout)
+# Cancel the slower one
+
+timeout: 5s
+cancel_slower: true
+```
+
+### Strategy: Consensus
+```yaml
+# Send to both models
+# Compare results
+# If agreement >80%, use merged result
+# If disagreement, use primary model
+
+agreement_threshold: 0.8
+merge_strategy: "best_of_both"
+```
+
+### Strategy: Best of Three
+```yaml
+# Send to primary model, generate 3 variants
+# Use evaluator (claude-opus-4) to pick best
+# Cost: 4x primary model calls
+
+variants: 3
+evaluator: claude-opus-4
+selection_criteria: ["security", "code_quality", "performance"]
+```
+
+### Strategy: Cost Optimized
+```yaml
+# Try cheapest model first
+# If confidence < threshold, escalate to next tier
+# Continue until acceptable quality or max budget
+
+tier_order:
+  - gpt-4o-mini
+  - claude-haiku
+  - gpt-4o
+  - claude-sonnet-4.5
+  - claude-opus-4
+
+max_budget: 0.10  # Max $0.10 per task
+confidence_threshold: 0.75
+```
+
+---
+
+## Dynamic Adjustment
+
+### Performance-Based Routing Updates
+
+```yaml
+# Monitor model performance, adjust routes automatically
+
+metrics:
+  - success_rate  # % tasks completed successfully
+  - avg_confidence  # Average confidence score
+  - avg_cost  # Average cost per task
+  - avg_latency  # Average response time
+  - human_intervention_rate  # % needing human help
+
+adjustment_rules:
+  - if success_rate < 0.8 for 10 tasks:
+    action: "downgrade_priority"  # Use cheaper model
+  - if success_rate > 0.95 for 20 tasks:
+    action: "upgrade_priority"  # Use for more task types
+  - if avg_latency > 30s:
+    action: "add_faster_fallback"
+  - if human_intervention_rate > 0.3:
+    action: "route_to_better_model"
+```
+
+### Budget-Aware Routing
+
+```javascript
+// Check remaining budget before routing
+const budget = await getRemainingBudget();
+const estimatedCost = estimateTaskCost(task, route);
+
+if (estimatedCost > budget * 0.1) {
+  // Task would use >10% of budget, use cheaper route
+  route = getCheapestRoute(task);
+}
+
+if (budget < 1.0) {
+  // Low budget mode: all tasks to cheapest models
+  forceCheapestAll();
+}
+```
+
+---
+
+## Task Classification
+
+The router needs to classify tasks into types:
+
+```yaml
+classification_rules:
+  - keywords: ["architecture", "design", "plan", "structure", "system"]
+    type: "architecture"
+  
+  - keywords: ["API", "endpoint", "route", "controller", "service"]
+    type: "implementation"
+  
+  - keywords: ["test", "spec", "assert", "mock", "stub"]
+    type: "testing"
+  
+  - keywords: ["auth", "security", "encrypt", "vulnerability", "OAuth"]
+    type: "security"
+  
+  - keywords: ["deploy", "Docker", "K8s", "CI/CD", "infra"]
+    type: "devops"
+  
+  - keywords: ["component", "UI", "frontend", "page", "style"]
+    type: "frontend"
+  
+  - keywords: ["database", "schema", "migration", "query", "model"]
+    type: "database"
+  
+  - keywords: ["document", "readme", "comment", "explain"]
+    type: "documentation"
+```
+
+---
+
+## Example Routing Decisions
+
+### Example 1: "Create login API endpoint"
+```
+Task: "Create login API endpoint with JWT"
+
+Classification:
+- Keywords: "API", "endpoint" → implementation
+- Also: "JWT" → security aspect
+- Complexity: medium
+
+Routing:
+- Primary: claude-sonnet-4.5 (implementation)
+- Fallback: gpt-4o
+- Strategy: fastest
+- Estimated cost: $0.02
+- Confidence: 0.82
+- Autonomy Level: 2 (Execute & Report)
+```
+
+### Example 2: "Design microservice architecture for e-commerce"
+```
+Task: "Design microservice architecture for e-commerce"
+
+Classification:
+- Keywords: "design", "architecture" → architecture
+- Complexity: high
+- Stakes: high
+
+Routing:
+- Primary: claude-opus-4 (architecture)
+- Fallback: gpt-5
+- Strategy: consensus (use both, merge)
+- Estimated cost: $0.50
+- Confidence: 0.75 (novel task)
+- Autonomy Level: 3 (Plan & Approve)
+```
+
+### Example 3: "Write unit tests for user service"
+```
+Task: "Write unit tests for user service"
+
+Classification:
+- Keywords: "tests", "unit" → testing
+- Complexity: low
+
+Routing:
+- Primary: gpt-4o-mini (testing, cheap)
+- Fallback: claude-haiku
+- Strategy: cost_optimized
+- Estimated cost: $0.005
+- Confidence: 0.88 (pattern match)
+- Autonomy Level: 1 (Full Auto)
+```
+
+---
+
+## Configuration Updates
+
+### Manual Override
+```yaml
+# config/routes/overrides.yaml
+# Force specific models for specific projects or tasks
+
+rules:
+  - project: "security-critical"
+    task_pattern: ".*"
+    force_model: claude-opus-4
+    reason: "Security requirements mandate highest quality"
+  
+  - task: ".*test.*"
+    force_strategy: cost_optimized
+    max_budget: 0.01
+```
+
+### Dynamic Updates from Learning
+```javascript
+// After each task, update routing based on performance
+if (modelPerformance[model][taskType].successRate < 0.8) {
+  // Downgrade this model for this task type
+  updateRoute(taskType, { priority: -1 });
+}
+
+if (modelPerformance[model][taskType].successRate > 0.95) {
+  // Upgrade this model for this task type
+  updateRoute(taskType, { priority: +1 });
+}
+```
+
+---
+
+## Cost Management
+
+### Budget Tracking
+```yaml
+budget:
+  daily_limit: 10.00  # $10 per day
+  weekly_limit: 50.00  # $50 per week
+  monthly_limit: 200.00  # $200 per month
+
+alert_thresholds:
+  - 50%: warn
+  - 80%: restrict_to_budget_models
+  - 90%: require_approval
+  - 100%: pause_execution
+```
+
+### Cost Optimization Strategies
+1. **Batch similar tasks** - Use same model context, reduce reloads
+2. **Cache results** - Identical tasks → reuse previous output
+3. **Progressive refinement** - Start cheap, upgrade only if needed
+4. **Parallel efficiency** - Run multiple tasks in single API call when possible
+
+---
+
+## Monitoring & Observability
+
+Log for every routing decision:
+```yaml
+timestamp: "2026-04-17T15:30:00Z"
+task: "Create login API"
+task_type: "implementation"
+route:
+  primary: claude-sonnet-4.5
+  fallback: gpt-4o
+  strategy: fastest
+estimated_cost: 0.02
+actual_cost: 0.018
+model_used: claude-sonnet-4.5
+latency: 8.2s
+confidence: 0.82
+autonomy_level: 2
+```
+
+---
+
+*This configuration enables intelligent, cost-effective model selection for autonomous development.*

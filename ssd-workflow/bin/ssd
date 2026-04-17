@@ -1,0 +1,37 @@
+#!/bin/bash
+#
+# SSD CLI - Entry point for Self-Determining System Development
+# This is a wrapper around OpenCode with SSD-specific agents
+
+set -e
+
+AGENT="${1:-SSDOra}"
+shift || true
+ARGS="$@"
+
+# Check if OpenCode is installed
+if ! command -v opencode &> /dev/null; then
+  echo "❌ OpenCode CLI not found."
+  echo "Install from: https://opencode.ai/docs"
+  echo "Or run: curl -fsSL https://raw.githubusercontent.com/opencodeai/OpenCode/main/install.sh | bash"
+  exit 1
+}
+
+# Check if SSD workflow is installed
+SSD_DIR="${SSD_DIR:-$HOME/.config/ssd-workflow/ssd-workflow}"
+if [ ! -d "$SSD_DIR" ]; then
+  echo "❌ SSD Workflow not found at $SSD_DIR"
+  echo "Run install.sh first:"
+  echo "  cd /path/to/ssd-workflow && ./install.sh"
+  exit 1
+}
+
+# Set environment for SSD
+export OPENCODE_AGENT_DIR="$SSD_DIR/agent"
+export OPENCODE_CONTEXT_DIR="$SSD_DIR/context"
+export OPENCODE_CONFIG_DIR="$SSD_DIR/config"
+export OPENCODE_STATE_DIR="$SSD_DIR/state"
+export SSD_MODE="true"
+
+# Pass through to OpenCode with SSD agent
+exec opencode --agent "$AGENT" $ARGS

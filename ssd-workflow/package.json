@@ -1,0 +1,51 @@
+{
+  "name": "ssd-workflow",
+  "version": "0.1.0",
+  "description": "Self-Determining System Development - Autonomous AI coding workflow",
+  "main": "bin/ssd",
+  "bin": {
+    "ssd": "bin/ssd"
+  },
+  "scripts": {
+    "install": "./install.sh",
+    "demo": "./bin/demo.sh",
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "node tests/unit/*.test.js",
+    "test:integration": "node tests/integration/*.test.js",
+    "extract-context": "./scripts/context/extract-patterns.sh",
+    "reweight": "./scripts/context/reweight.sh",
+    "generate-report": "./scripts/learning/generate-report.sh"
+  },
+  "keywords": [
+    "ai",
+    "coding",
+    "autonomous",
+    "agents",
+    "opencode",
+    "developer-tools",
+    "llm",
+    "self-healing",
+    "parallel-execution"
+  ],
+  "author": "SSD Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/ssd-workflow.git"
+  },
+  "dependencies": {
+    "yaml": "^2.3.4",
+    "diff": "^5.1.0",
+    "chalk": "^5.3.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "@types/node": "^20.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "bun": ">=1.0.0"
+  },
+  "os": ["darwin", "linux"],
+  "preferGlobal": true
+}

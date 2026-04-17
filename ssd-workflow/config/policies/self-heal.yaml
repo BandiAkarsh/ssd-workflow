@@ -1,0 +1,449 @@
+---
+description: "Autonomous error detection and correction policies"
+version: "0.1.0"
+---
+
+# Self-Healing Policies
+
+Defines how the SSD system detects, analyzes, and corrects errors without human intervention.
+
+---
+
+## Philosophy
+
+**"Fail fast, fix faster, learn forever."**
+
+Self-healing is not just retrying. It's:
+1. **Proactive detection** - Find errors before they cause problems
+2. **Intelligent correction** - Apply the right fix strategy
+3. **Confidence preservation** - Only auto-correct when confident
+4. **Learning integration** - Store successful corrections for future
+
+---
+
+## Error Detection Methods
+
+### 1. Static Analysis (Pre-Execution)
+```javascript
+// Before executing code, validate:
+await validate({
+  syntax: "Check for syntax errors",
+  types: "Run type checker (tsc, mypy, etc.)",
+  lint: "Run linter (ESLint, Ruff, etc.)",
+  imports: "Verify all imports exist",
+  dependencies: "Check package.json / requirements.txt"
+});
+
+// If any fail → don't execute, go to correction
+```
+
+### 2. Runtime Prediction
+```javascript
+// Analyze code patterns that commonly cause errors:
+const predictions = await predictErrors(generatedCode);
+// Returns:
+// [
+//   { type: "null_pointer", confidence: 0.85, location: "line 23" },
+//   { type: "sql_injection", confidence: 0.72, location: "line 45" },
+//   { type: "race_condition", confidence: 0.65, location: "line 67" }
+// ]
+
+if (predictions.length > 0 && predictions[0].confidence > 0.7) {
+  // Preemptively fix before execution
+  await correct(predictions[0]);
+}
+```
+
+### 3. Test Simulation
+```javascript
+// Run mental tests (without actually executing):
+const testResults = await simulateTests(generatedCode);
+// Check:
+// - Edge cases handled?
+// - Error conditions covered?
+// - Type constraints satisfied?
+
+if (!testResults.passed) {
+  await fixTestFailures(testResults.failures);
+}
+```
+
+### 4. Integration Validation
+```javascript
+// Check if code integrates with existing codebase:
+const integration = await validateIntegration({
+  newCode: generatedCode,
+  existingCode: getRelatedFiles(),
+  interfaces: getExpectedInterfaces()
+});
+
+if (!integration.compatible) {
+  await fixIntegrationIssues(integration.issues);
+}
+```
+
+---
+
+## Correction Strategies by Error Type
+
+### Type Errors
+```yaml
+error_type: "type_error"
+description: "Type mismatch, missing types, incorrect annotations"
+
+strategies:
+  - attempt: 1
+    action: "add_explicit_type_annotations"
+    description: "Add missing type hints to ambiguous code"
+    confidence: 0.8
+  
+  - attempt: 2
+    action: "use_generic_any_as_fallback"
+    description: "Use 'any' or 'unknown' as last resort"
+    confidence: 0.6
+    note: "Flag for human review"
+  
+  - attempt: 3
+    action: "request_human_help"
+    description: "Cannot resolve, need human expertise"
+    confidence: 0.0
+```
+
+### Test Failures
+```yaml
+error_type: "test_failure"
+description: "Tests don't pass (real or simulated)"
+
+strategies:
+  - attempt: 1
+    action: "fix_implementation_to_match_tests"
+    description: "Tests are correct, fix implementation"
+    confidence: 0.85
+    condition: "tests_are_well_written"
+  
+  - attempt: 2
+    action: "fix_tests_to_match_implementation"
+    description: "Implementation is correct, fix tests"
+    confidence: 0.75
+    condition: "tests_are_trivial_or_wrong"
+  
+  - attempt: 3
+    action: "rewrite_both"
+    description: "Both are flawed, start fresh"
+    confidence: 0.6
+```
+
+### Import/Module Errors
+```yaml
+error_type: "import_error"
+description: "Cannot find module, wrong import path"
+
+strategies:
+  - attempt: 1
+    action: "check_typo_and_fix"
+    description: "Common typos: missing '/index', wrong case"
+    confidence: 0.9
+  
+  - attempt: 2
+    action: "search_for_similar_module"
+    description: "Find similarly named modules, suggest alternatives"
+    confidence: 0.7
+  
+  - attempt: 3
+    action: "check_package_dependencies"
+    description: "Module might be in uninstalled package"
+    confidence: 0.5
+  
+  - attempt: 4
+    action: "ask_human_for_correct_import"
+    description: "Cannot determine, need human"
+    confidence: 0.0
+```
+
+### Security Vulnerabilities
+```yaml
+error_type: "security_vulnerability"
+description: "Potential security issue detected"
+
+strategies:
+  - attempt: 1
+    action: "apply_security_fix"
+    description: "Apply automated security patch"
+    confidence: 0.95
+    examples:
+      - "SQL injection → use parameterized queries"
+      - "XSS → escape output"
+      - "Hardcoded secret → use environment variable"
+  
+  - attempt: 2
+    action: "rewrite_secure_alternative"
+    description: "Rewrite with security-first approach"
+    confidence: 0.8
+  
+  - attempt: 3
+    action: "flag_for_security_review"
+    description: "Complex security issue, needs human expert"
+    confidence: 0.0
+    mandatory_human: true
+```
+
+### Performance Issues
+```yaml
+error_type: "performance_anti_pattern"
+description: "Inefficient code: O(n²), unnecessary re-renders, etc."
+
+strategies:
+  - attempt: 1
+    action: "optimize_algorithm"
+    description: "Replace O(n²) with O(n log n) or O(n)"
+    confidence: 0.7
+  
+  - attempt: 2
+    action: "add_memoization"
+    description: "Cache expensive computations"
+    confidence: 0.8
+  
+  - attempt: 3
+    action: "lazy_load"
+    description: "Defer loading until needed"
+    confidence: 0.75
+  
+  - attempt: 4
+    action: "accept_with_warning"
+    description: "Performance impact acceptable for now"
+    confidence: 0.5
+    note: "Document technical debt"
+```
+
+### Integration Conflicts
+```yaml
+error_type: "integration_conflict"
+description: "New code conflicts with existing code"
+
+strategies:
+  - attempt: 1
+    action: "adapt_to_existing_patterns"
+    description: "Change new code to match project conventions"
+    confidence: 0.85
+  
+  - attempt: 2
+    action: "refactor_existing_code"
+    description: "If new code is better, refactor old code"
+    confidence: 0.6
+    condition: "new_pattern_is_superior"
+  
+  - attempt: 3
+    action: "create_adapter_layer"
+    description: "Bridge old and new patterns with adapter"
+    confidence: 0.7
+```
+
+---
+
+## Confidence Scoring
+
+Every correction attempt has a confidence score. Only auto-apply if confidence > threshold.
+
+```javascript
+const confidence = await assessCorrectionConfidence({
+  error: detectedError,
+  strategy: proposedStrategy,
+  context: currentContext,
+  pastAttempts: history
+});
+
+// Factors:
+// - Strategy success rate for this error type: +0.3
+// - Similar past corrections: +0.2
+// - Code complexity: -0.1 per 50 lines
+// - Test coverage: +0.2 if tests exist
+// - Team familiarity: +0.1 if pattern used before
+
+if (confidence > 0.75) {
+  await applyCorrection(proposedStrategy);
+} else {
+  await escalateToHuman(detectedError, proposedStrategy, confidence);
+}
+```
+
+---
+
+## Retry Policies
+
+### Maximum Attempts
+```yaml
+max_attempts:
+  default: 3
+  security: 1  # Security errors → human immediately
+  critical: 2  # Critical errors → limited retries
+```
+
+### Backoff Strategy
+```yaml
+retry_delay:
+  initial: 1s
+  max: 10s
+  multiplier: 2  # Exponential backoff
+  jitter: 0.1  # ±10% randomness
+```
+
+### Strategy Escalation
+```javascript
+// If strategy fails, escalate to more aggressive strategies
+let attempts = 0;
+let strategy = getInitialStrategy(error);
+
+while (attempts < maxAttempts) {
+  try {
+    result = await apply(strategy);
+    if (result.success) break;
+  } catch (e) {
+    attempts++;
+    strategy = getNextStrategy(error, attempts);
+    await sleep(backoff(attempts));
+  }
+}
+
+if (attempts >= maxAttempts) {
+  await escalateToHuman(error, strategy, attempts);
+}
+```
+
+---
+
+## Approval Gates
+
+Not all corrections auto-apply. Use confidence thresholds:
+
+```yaml
+approval_gates:
+  - confidence: 0.9-1.0
+    action: "auto_apply"
+    notify: "info_only"
+  
+  - confidence: 0.75-0.9
+    action: "auto_apply_with_flag"
+    notify: "flag_for_post_review"
+    log: "detailed"
+  
+  - confidence: 0.5-0.75
+    action: "request_approval"
+    notify: "require_human_approval"
+    context: "show_alternatives"
+  
+  - confidence: 0.0-0.5
+    action: "escalate"
+    notify: "require_human_intervention"
+    priority: "high"
+```
+
+---
+
+## Learning from Corrections
+
+When human overrides or modifies auto-corrections:
+
+```javascript
+// Capture human feedback
+await learningAgent.recordCorrection({
+  originalError: error,
+  attemptedStrategy: strategy,
+  autoFix: proposedFix,
+  humanFix: actualFix,
+  difference: diff(autoFix, actualFix),
+  reason: humanFeedbackReason,
+  timestamp: now()
+});
+
+// Update strategy effectiveness
+await updateStrategySuccessRate({
+  strategy: strategy,
+  errorType: error.type,
+  success: false,  // Human overrode → not successful
+  reason: "human_override"
+});
+
+// Suggest new strategy if human fix is better
+if (humanFixIsPattern) {
+  await learningAgent.addNewStrategy({
+    errorType: error.type,
+    strategy: humanFix,
+    confidence: 0.9,  // Human-approved
+    source: "human_feedback"
+  });
+}
+```
+
+---
+
+## Monitoring & Alerts
+
+### Metrics to Track
+```yaml
+metrics:
+  - self_heal_rate  # % errors fixed autonomously
+  - auto_approval_rate  # % corrections auto-applied
+  - human_escalation_rate  # % needing human
+  - avg_corrections_per_task  # How many fixes per task
+  - strategy_success_rates  # Which strategies work best
+  - time_to_self_heal  # Minutes from error to fix
+```
+
+### Alerts
+```yaml
+alerts:
+  - if self_heal_rate < 0.3 for 1 day:
+    action: "warn"
+    message: "Self-healing effectiveness dropping"
+  
+  - if human_escalation_rate > 0.5 for 1 day:
+    action: "critical"
+    message: "Too many errors need human, review strategies"
+  
+  - if any strategy success_rate < 0.2:
+    action: "disable_strategy"
+    message: "Strategy ineffective, disable temporarily"
+```
+
+---
+
+## Example Self-Healing Flow
+
+```
+Task: "Create API endpoint"
+Agent generates code → Type check fails (missing return type)
+
+1. Detection: TypeScript compiler error
+2. Classification: type_error
+3. Strategy lookup: type_error → attempt 1: add_explicit_type_annotations
+4. Apply: Add return type: Promise<Response>
+5. Re-validate: Type check passes ✓
+6. Log: Self-healed type error, +1 to strategy success
+7. Continue execution
+
+If attempt 1 failed:
+→ Attempt 2: use_any_as_fallback
+→ If still fails → escalate to human
+→ Human fixes → learn from correction
+```
+
+---
+
+## Safety Constraints
+
+### Never Auto-Correct:
+- Security vulnerabilities requiring human judgment
+- Architectural decisions
+- Breaking changes to existing APIs
+- Data loss risks
+- Compliance violations
+
+### Always Flag for Human:
+- Any correction with confidence < 0.5
+- Strategy never used before
+- Multiple conflicting corrections
+- High-stakes production code
+
+---
+
+*Self-healing enables autonomous operation while maintaining quality.*

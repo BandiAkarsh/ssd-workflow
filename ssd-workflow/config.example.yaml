@@ -1,0 +1,99 @@
+---
+# SSD Workflow Configuration Example
+# Copy to ~/.config/ssd-workflow/config.yaml and customize
+
+# Model API keys (set in environment variables recommended)
+# OPENAI_API_KEY: "sk-..."
+# ANTHROPIC_API_KEY: "sk-..."
+# GEMINI_API_KEY: "..."
+# OPENROUTER_API_KEY: "..."
+
+# Budget constraints (USD)
+budget:
+  daily_limit: 10.00
+  weekly_limit: 50.00
+  monthly_limit: 200.00
+  alert_at_percentages: [50, 80, 90]
+
+# Autonomy settings
+autonomy:
+  # Confidence thresholds for auto-approval
+  auto_approve_threshold: 0.90  # >90% confidence → no human review
+  execute_with_flag_threshold: 0.75  # 75-90% → execute, flag for review
+  require_approval_threshold: 0.50  # <75% → require approval
+  
+  # Maximum autonomous tasks per day (safety limit)
+  max_autonomous_tasks_per_day: 50
+  
+  # Always require human for these task types
+  always_require_human:
+    - "security"
+    - "production_deploy"
+    - "database_migration"
+
+# Parallel execution
+parallel:
+  max_concurrent_agents: 5  # Maximum parallel tasks
+  batch_size: 3  # Tasks per batch
+  resource_aware: true  # Adjust based on system load
+
+# Self-healing
+self_healing:
+  enabled: true
+  max_retries: 3
+  auto_correct_confidence: 0.75
+  always_human_for:
+    - "security_vulnerability"
+    - "data_loss_risk"
+    - "compliance_violation"
+
+# Learning
+learning:
+  enabled: true
+  feedback_collection: "always"  # always, on_error, never
+  auto_weight_update: true
+  weekly_reweight: true
+  store_corrections: true
+  team_sync: false  # Sync learnings with team (requires git)
+
+# Context
+context:
+  dynamic_loading: true
+  max_patterns_per_task: 10
+  min_context_tokens: 500
+  max_context_tokens: 3000
+  include_recent_corrections: true
+  exploration_rate: 0.1  # 10% chance to load lower-weight pattern (exploration)
+
+# Logging
+logging:
+  level: "info"  # debug, info, warn, error
+  file: "$HOME/.config/ssd-workflow/logs/ssd.log"
+  rotate: true
+  max_size_mb: 100
+  keep_days: 30
+
+# Metrics
+metrics:
+  enabled: true
+  push_interval: 60  # seconds
+  storage: "sqlite"  # sqlite, json, prometheus
+  
+# Notifications (optional)
+notifications:
+  enabled: false
+  on_completion: false
+  on_error: true
+  on_escalation: true
+  channels:
+    - "desktop"  # Desktop notification
+    # - "slack:webhook_url"
+    # - "telegram:bot_token:chat_id"
+    # - "email:user@example.com"
+
+# Advanced
+advanced:
+  cache_results: true
+  cache_ttl_hours: 24
+  debug_mode: false
+  experimental_features: false
